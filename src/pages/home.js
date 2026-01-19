@@ -57,15 +57,13 @@ export default function Home() {
   // Fetch notes only after user is available
   useEffect(() => {
     if (user) {
-      (async () => {
         logger && logger.log && logger.log({ message: 'Home: fetching notes' });
         try {
-          await dispatch(listNotes());
+          dispatch(listNotes());
           logger && logger.log && logger.log({ message: 'Home: notes fetched' });
         } catch (err) {
           logger && logger.log && logger.log({ message: 'Home: notes fetch failed', meta: { error: err.message }, level: 'error' });
         }
-      })();
     }
   }, [user, dispatch, logger]);
 
