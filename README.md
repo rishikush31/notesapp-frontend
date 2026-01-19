@@ -6,78 +6,79 @@
   - Server middleware
   - Server-side render (SSR)
   - Client-side render
-- Demonstrates **code splitting**
-  - Route-level (`/about`)
-  - Component-level (lazy components via buttons)
+# Notes App (Frontend)
+
+This repository is the frontend for a Notes app built with Fusion.js and React. It includes:
+- Authentication (login/register/google) backed by cookie-based tokens
+- Notes CRUD (list, create, update, delete)
+- A small custom logger plugin at `src/plugins/logger`
+
+Quick goals:
+- Run the app locally against the backend at http://localhost:3000
+- Use the logger plugin to inspect important events
 
 ---
----
 
-## Run Commands
+## Prerequisites
+- Node.js (14+ recommended)
+- Yarn or npm
+- Backend API running at `http://localhost:3000` (see backend README)
 
-### Development
+## Install
+
+```bash
+yarn install
+# or: npm install
+```
+
+## Development
+
+Start the dev server (hot reload):
+
 ```bash
 yarn dev
 ```
 
-### Production
+Open `http://localhost:3001` in the browser (the frontend expects the backend on port 3000).
+
+## Production build
+
 ```bash
-yarn build-production
+yarn build
 yarn start
 ```
----
----
 
-## Log Behavior
-### Server Middleware (every HTTP Request)
-```bash
-[SERVER-MW] Request for: /
-[SERVER-MW] Request for: /about
-[SERVER-MW] Request for: /_static/client-xxx.js
-```
-### Server-Side 
-```bash
-[SERVER] Home SSR render
-[SERVER] About SSR render
-```
-### Client-Side
-```bash
-[SERVER] Home SSR render
-[SERVER] About SSR render
-```
+## Environment / Backend expectations
+- The frontend talks to these backend endpoints (via `src/utils/apiFetch.js`):
+  - `POST /auth/login`, `POST /auth/register`, `POST /auth/google`, `POST /auth/logout`, `POST /auth/refresh`
+  - `GET /api/user` — returns current user when cookies are present
+  - `GET/POST/PUT/DELETE /api/notes`
+- The backend must allow CORS with credentials and set cookies with appropriate SameSite flags for cross-origin testing.
 
-## Bundle download behaviour
-### Initial Page Load
-```bash
-/_static/client-main-xxxx.js
-/_static/client-runtime-xxxx.js
-```
-### Lazy Component (button click)
-```bash
-/_static/client-src_components_lazyBoxA_js.js
-```
-### Route Navigation (`/about`)
-```bash
-/_static/client-src_pages_about_js.js
-```
----
+## Logger plugin
+- The logger plugin is at `src/plugins/logger/plugin.js` and its token is `src/plugins/logger/token.js`.
+- Server middleware logs every request; the plugin also exposes a `log()` API to other modules.
+
+## Troubleshooting (common issues)
+- "Actions must be plain objects": ensure thunk middleware is registered via Fusion `EnhancerToken`. See `src/main.js` and `src/store/redux.js`.
+- Empty notes or 401s on first load: the app rehydrates auth via `getUser()` and then fetches notes only after login. Confirm backend cookies are sent (check browser devtools → Network → request headers and Cookies).
+- Logout flicker: the app dispatches `logout()` to clear client state — navigation is handled by callers (e.g., `src/pages/home.js`). If you see a page reload, check `src/store/auth/actions.js` for leftover reloads.
+
+## Where to find things
+- App entry: `src/main.js`
+- Routes / root: `src/root.js`
+- Auth actions: `src/store/auth/actions.js`
+- Notes actions: `src/store/notes/actions.js`
+- API helper: `src/utils/apiFetch.js`
+- Logger plugin: `src/plugins/logger/plugin.js`
+
+## Testing logs
+- Open browser DevTools Console to see client-side logs. Server logs appear in the terminal running the node server.
+
 ---
 
-## Dev vs Prod
+If you want, I can:
+- Add structured logging to more places (navigation, component mounts)
+- Add a small troubleshooting script to verify backend cookies/CORS
 
-### `yarn dev`
-- Hot reload enabled
-- Bundles may re-download
-- Multiple SSR logs possible
-
-### `yarn build && yarn start`
-- Stable bundle names
-- Bundles downloaded once
-- SSR only on refresh or direct URL hit
-
-## Key Points
-- Token = dependency contract
-- Plugin = implementation
-- SSR happens only on server requests
-- Client navigation does NOT trigger SSR
-- Code splitting verified via Network tab
+Enjoy — tell me what you'd like logged next.
