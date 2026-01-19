@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'fusion-plugin-react-router';
+import { useService } from 'fusion-react';
+import { LoggerToken } from '../plugins/logger/token';
 import GoogleLoginButton from '../components/googleLoginButton';
 import { login, googleLogin, getUser } from '../store/auth/actions';
 
@@ -21,6 +23,16 @@ export default function Login() {
     if (!user) dispatch(getUser());
   }, [dispatch, user]);
 
+  // SSR + client mount logging
+  const logger = useService(LoggerToken);
+  useEffect(() => {
+    if (__NODE__) {
+      logger && logger.log && logger.log({ message: 'Login SSR render' });
+    } else if (__BROWSER__) {
+      logger && logger.log && logger.log({ message: 'Login mounted (client)' });
+    }
+  }, [logger]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -32,6 +44,7 @@ export default function Login() {
   // --- Email/Password login ---
   const handleEmailLogin = (e) => {
     e.preventDefault();
+    logger && logger.log && logger.log({ message: 'Login: email attempt', meta: { email } });
     dispatch(login({ email, password }));
   };
 

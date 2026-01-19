@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'fusion-plugin-react-router';
+import { useService } from 'fusion-react';
+import { LoggerToken } from '../plugins/logger/token';
 import { register, getUser } from '../store/auth/actions';
 
 const hoverStyles = `
@@ -29,15 +31,25 @@ export default function Register() {
     if (user) history.push('/');
   }, [user, history]);
 
+  const logger = useService(LoggerToken);
+  useEffect(() => {
+    if (__NODE__) {
+      logger && logger.log && logger.log({ message: 'Register SSR render' });
+    } else if (__BROWSER__) {
+      logger && logger.log && logger.log({ message: 'Register mounted (client)' });
+    }
+  }, [logger]);
+
   // --- Email/Password Registration ---
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      logger && logger.log && logger.log({ message: 'Register: attempt', meta: { email, name } });
       await dispatch(register({ name, email, password }));
       history.push('/');
     } catch (err) {
       // error is already handled in reducer, optional logging
-      console.error(err);
+      logger && logger.log && logger.log({ message: 'Register: failed', meta: { error: err.message }, level: 'error' });
     }
   };
 

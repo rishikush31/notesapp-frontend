@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useHistory } from 'fusion-plugin-react-router';
+import { useService } from 'fusion-react';
+import { LoggerToken } from '../plugins/logger/token';
 
 import { listNotes, updateNote, deleteNote, createNote } from '../store/notes/actions';
 import { getUser, logout } from '../store/auth/actions';
@@ -37,6 +39,7 @@ const hoverStyles = `
 export default function Home() {
   const dispatch = useDispatch();
   const history = useHistory();
+  const logger = useService(LoggerToken);
 
   const { user, loading: authLoading } = useSelector((state) => state.auth || {});
   const { list: notes, loading, error } = useSelector((state) => state.notes || {});
@@ -47,13 +50,24 @@ export default function Home() {
   // --- Rehydrate user and fetch notes on mount ---
   // Rehydrate user on mount
   useEffect(() => {
+    logger && logger.log && logger.log({ message: 'Home: rehydrate start' });
     dispatch(getUser());
   }, [dispatch]);
 
   // Fetch notes only after user is available
   useEffect(() => {
-    if (user) dispatch(listNotes());
-  }, [user, dispatch]);
+    if (user) {
+      (async () => {
+        logger && logger.log && logger.log({ message: 'Home: fetching notes' });
+        try {
+          await dispatch(listNotes());
+          logger && logger.log && logger.log({ message: 'Home: notes fetched' });
+        } catch (err) {
+          logger && logger.log && logger.log({ message: 'Home: notes fetch failed', meta: { error: err.message }, level: 'error' });
+        }
+      })();
+    }
+  }, [user, dispatch, logger]);
 
   // If rehydration finished and there's no user, redirect to login
   useEffect(() => {
@@ -70,9 +84,20 @@ export default function Home() {
   const handleCreate = (note) => dispatch(createNote(note));
 
   const handleLogout = async() => {
+    logger && logger.log && logger.log({ message: 'Home: logout initiated' });
     await dispatch(logout());
+    logger && logger.log && logger.log({ message: 'Home: logout completed' });
     history.push('/login');
   };
+
+  // SSR + client mount logging
+  useEffect(() => {
+    if (__NODE__) {
+      logger && logger.log && logger.log({ message: 'Home SSR render', level: 'info' });
+    } else if (__BROWSER__) {
+      logger && logger.log && logger.log({ message: 'Home mounted (client)', level: 'info' });
+    }
+  }, [logger]);
 
   return (
     <div style={styles.container}>
