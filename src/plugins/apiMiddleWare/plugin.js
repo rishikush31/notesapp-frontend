@@ -1,75 +1,66 @@
 import { createPlugin } from 'fusion-core';
-import { ApiFetchToken } from '../apiFetch/token';
+import fetch from 'node-fetch';
+import { useSelector } from 'react-redux';
+import {useService} from 'fusion-react';
+import {EnvToken} from '../env/token';
 
 export default createPlugin({
-    deps: {
-        apiFetch: ApiFetchToken,
-    },
+  deps: {
+    env: EnvToken,
+  },
+  middleware({env}) {
+    return async (ctx, next) => {
+      // Only proxy API / Auth routes
+      if (!__NODE__ || (!ctx.path.startsWith('/api') && !ctx.path.startsWith('/auth'))) {
+        return next();
+      }
 
-    middleware({ apiFetch }) {
-        return async (ctx, next) => {
-            console.log("[apiMiddleware] Incoming path:", ctx.path);
-            console.log("[apiMiddleware] Request method:", ctx.method);
+      console.log("Getting Request")
 
-            if (!__NODE__ || (!ctx.path.startsWith('/api') && !ctx.path.startsWith('/auth'))) {
-                console.log("[apiMiddleware] Skipping path, calling next()");
-                return next();
-            }
+      console.log("ENV : ", env);
 
-            console.log("[apiMiddleware] Handling path:", ctx.path);
+      console.log("Not forward")
+      // Read body (if any)
+      let body;
+      if (ctx.req && ctx.req.readable) {
+        body = await new Promise((resolve) => {
+          let data = '';
+          ctx.req.on('data', chunk => (data += chunk));
+          ctx.req.on('end', () => resolve(data));
+        });
+      }
 
-            // Read raw body from ctx.req
-            let rawBody = undefined;
-            if (ctx.req && ctx.req.readable) {
-                rawBody = await new Promise((resolve, reject) => {
-                    let data = '';
-                    ctx.req.on('data', chunk => {
-                        console.log("[apiMiddleware] Received chunk:", chunk.toString());
-                        data += chunk;
-                    });
-                    ctx.req.on('end', () => {
-                        console.log("[apiMiddleware] Completed reading body:", data);
-                        resolve(data);
-                    });
-                    ctx.req.on('error', err => {
-                        console.error("[apiMiddleware] Error reading body:", err);
-                        reject(err);
-                    });
-                });
-            } else {
-                console.log("[apiMiddleware] No readable body found");
-            }
+      // Forward request to backend
+      console.log("BACKEND_BASE_URL : ",env.BACKEND_BASE_URL);
+      const res = await fetch(`${env.BACKEND_BASE_URL}${ctx.path}`, {
+        method: ctx.method,
+        headers: {
+          'content-type': ctx.headers['content-type'] || 'application/json',
+          cookie: ctx.headers.cookie || '',
+        },
+        body: body || undefined,
+      });
 
-            console.log("[apiMiddleware] Forwarding body to backend:", rawBody);
+      console.log("[apiMiddleware] Request : ", ctx.url, ctx.method)
+      console.log("[apiMiddleware] Response : ", res)
 
-            const cookiesToForward = ctx.headers.cookie || '';
-            console.log("[apiMiddleware] Forwarding cookies:", cookiesToForward);
+      // Forward status
+      ctx.status = res.status;
 
-            const res = await apiFetch(ctx, ctx.path, {
-                method: ctx.method,
-                headers: {
-                    'content-type': 'application/json',
-                    cookie: cookiesToForward, // forward everything
-                },
-                body: rawBody,
-            });
+      // Forward Set-Cookie headers
+      const setCookie = res.headers.raw()['set-cookie'];
+      if (setCookie) {
+        ctx.set('set-cookie', setCookie);
+      }
 
-            console.log("[apiMiddleware] Response from backend:", {
-                status: res.status,
-                statusText: res.statusText,
-                ok: res.ok,
-            });
-
-            try {
-                ctx.body = await res.json();
-                console.log("[apiMiddleware] Response body parsed:", ctx.body);
-            } catch (err) {
-                console.warn("[apiMiddleware] Could not parse JSON response:", err);
-                ctx.body = await res.text(); // fallback to raw text
-            }
-
-            ctx.status = res.status;
-            console.log("[apiMiddleware] Setting ctx.status:", ctx.status);
-        };
-    },
+      // Forward response body
+      const text = await res.text();
+      console.log("[apiMiddleware] Response Text: ", text, JSON.parse(text))
+      try {
+        ctx.body = JSON.parse(text) || {} ;
+      } catch {
+        ctx.body = text;
+      }
+    };
+  },
 });

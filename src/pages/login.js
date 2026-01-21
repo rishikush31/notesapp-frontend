@@ -4,7 +4,9 @@ import { useHistory } from 'fusion-plugin-react-router';
 import { useService } from 'fusion-react';
 import { LoggerToken } from '../plugins/logger/token';
 import GoogleLoginButton from '../components/googleLoginButton';
-import { login, googleLogin, getUser } from '../store/auth/actions';
+import { login, googleLogin } from '../store/auth/actions';
+import { getUser } from '../store/notes/actions';
+import {useToast} from '../ui/toast/ToastContext';
 
 const hoverStyles = `
   .login-btn:hover {
@@ -13,7 +15,11 @@ const hoverStyles = `
   }
 `;
 
+
 export default function Login() {
+
+  const toast = useToast();
+
   const dispatch = useDispatch();
   const history = useHistory();
   const { loading, error, user } = useSelector((state) => state.auth || {});
@@ -43,6 +49,10 @@ export default function Login() {
   useEffect(() => {
     if (user) history.push('/');
   }, [user, history]);
+
+  useEffect(()=>{
+    if (error) toast.showToast(error);
+  },[error])
 
   // --- Email/Password login ---
   const handleEmailLogin = (e) => {

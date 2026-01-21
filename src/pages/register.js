@@ -3,7 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'fusion-plugin-react-router';
 import { useService } from 'fusion-react';
 import { LoggerToken } from '../plugins/logger/token';
-import { register, getUser } from '../store/auth/actions';
+import { register } from '../store/auth/actions';
+import { getUser } from '../store/notes/actions';
+import {useToast} from '../ui/toast/ToastContext';
 
 const hoverStyles = `
   .register-btn:hover {
@@ -13,6 +15,9 @@ const hoverStyles = `
 `;
 
 export default function Register() {
+
+  const toast = useToast();
+
   const dispatch = useDispatch();
   const history = useHistory();
   const { loading, error, user } = useSelector((state) => state.auth || {});
@@ -31,14 +36,12 @@ export default function Register() {
     if (user) history.push('/');
   }, [user, history]);
 
+  useEffect(()=>{
+    if (error) toast.showToast(error);
+  },[error])
+
+
   const logger = useService(LoggerToken);
-  useEffect(() => {
-    if (__NODE__) {
-      logger && logger.log && logger.log({ message: 'Register SSR render' });
-    } else if (__BROWSER__) {
-      logger && logger.log && logger.log({ message: 'Register mounted (client)' });
-    }
-  }, [logger]);
 
   // --- Email/Password Registration ---
   const handleRegister = async (e) => {

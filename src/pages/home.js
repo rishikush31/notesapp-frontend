@@ -5,7 +5,8 @@ import { useService } from 'fusion-react';
 import { LoggerToken } from '../plugins/logger/token';
 
 import { listNotes, updateNote, deleteNote, createNote } from '../store/notes/actions';
-import { getUser, logout } from '../store/auth/actions';
+import { logout } from '../store/auth/actions';
+import { getUser } from '../store/notes/actions';
 import NoteModal from '../components/noteModal';
 
 // Add hover styles

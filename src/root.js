@@ -2,6 +2,7 @@
 import React from 'react';
 import {GoogleOAuthProvider} from '@react-oauth/google';
 import {Route, Switch} from 'fusion-plugin-react-router';
+import {ToastProvider} from './ui/toast/ToastContext';
 import {split} from 'fusion-react';
 
 const Login = split({
@@ -23,11 +24,13 @@ const Home = split({
 });
 
 const root = (
+  <ToastProvider>
    <Switch>
     <Route exact path="/login" component={Login} />
     <Route exact path="/register" component={Register} />
     <Route exact path="/" component={Home} />
   </Switch>
+  </ToastProvider>
 );
 
 export default root;

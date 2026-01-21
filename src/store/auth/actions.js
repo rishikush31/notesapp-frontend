@@ -2,31 +2,6 @@
  * Fetch logged-in user using cookies
  * Used on app bootstrap / page refresh
  */
-export const getUser = () => async (dispatch) => {
-  dispatch({ type: 'AUTH_REQUEST' });
-  console.log("[getUser] Dispatch AUTH_REQUEST");
-
-  try {
-    console.log("[getUser] Calling fetch /api/user with credentials include");
-    const res = await fetch('/api/user', {
-      credentials: 'include',
-    });
-
-    console.log("[getUser] Response status:", res.status, "ok:", res.ok);
-
-    if (!res.ok) throw new Error('Unauthorized');
-
-    const user = await res.json();
-    console.log("[getUser] Fetched user:", user);
-
-    dispatch({ type: 'AUTH_SUCCESS', payload: user });
-    console.log("[getUser] Dispatch AUTH_SUCCESS");
-  } catch (err) {
-    console.error("[getUser] Error:", err.message);
-    dispatch({ type: 'AUTH_LOGOUT' });
-    console.log("[getUser] Dispatch AUTH_LOGOUT");
-  }
-};
 
 export const login = ({ email, password }) => async (dispatch) => {
   dispatch({ type: 'AUTH_REQUEST' });
