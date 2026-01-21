@@ -70,6 +70,12 @@ export default createPlugin({
       try {
         const data = await res.clone().json(); // clone so original response can still be used
         console.log("[apiFetch] Response JSON:", data);
+
+        const setCookies = res.headers.raw()['set-cookie'];
+        if (setCookies) {
+          ctx.set('set-cookie', setCookies);
+        }
+
       } catch (err) {
         const text = await res.clone().text();
         console.log("[apiFetch] Response text (non-JSON):", text);
