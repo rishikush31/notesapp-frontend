@@ -20,8 +20,11 @@ export default function Login() {
 
   // Rehydrate user on mount if not present
   useEffect(() => {
-    if (!user) dispatch(getUser());
-  }, [dispatch, user]);
+  if (!user) {
+    dispatch(getUser());
+  }
+}, [dispatch, user]);
+
 
   // SSR + client mount logging
   const logger = useService(LoggerToken);
@@ -50,6 +53,7 @@ export default function Login() {
 
   // --- Google OAuth login ---
   const handleGoogleSuccess = (response) => {
+    logger && logger.log && logger.log({ message: 'Login: google attempt', meta: { response } });
     dispatch(googleLogin(response.credential));
   };
 
@@ -89,10 +93,10 @@ export default function Login() {
         <div style={styles.divider}>or</div>
 
         {/* Google Login Button */}
-        <GoogleLoginButton
+        {__BROWSER__ && (<GoogleLoginButton
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
-        />
+        />)}
 
         {error && <div style={styles.error}>{error}</div>}
         
