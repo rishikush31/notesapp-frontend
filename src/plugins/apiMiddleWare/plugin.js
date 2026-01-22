@@ -15,11 +15,11 @@ export default createPlugin({
         return next();
       }
 
-      console.log("Getting Request")
+      // console.log("Getting Request")
 
-      console.log("ENV : ", env);
+      // console.log("ENV : ", env);
 
-      console.log("Not forward")
+      // console.log("Not forward")
       // Read body (if any)
       let body;
       if (ctx.req && ctx.req.readable) {
@@ -31,7 +31,7 @@ export default createPlugin({
       }
 
       // Forward request to backend
-      console.log("BACKEND_BASE_URL : ",env.BACKEND_BASE_URL);
+      // console.log("BACKEND_BASE_URL : ",env.BACKEND_BASE_URL);
       const res = await fetch(`${env.BACKEND_BASE_URL}${ctx.path}`, {
         method: ctx.method,
         headers: {
@@ -41,8 +41,8 @@ export default createPlugin({
         body: body || undefined,
       });
 
-      console.log("[apiMiddleware] Request : ", ctx.url, ctx.method)
-      console.log("[apiMiddleware] Response : ", res)
+      // console.log("[apiMiddleware] Request : ", ctx.url, ctx.method)
+      // console.log("[apiMiddleware] Response : ", res)
 
       // Forward status
       ctx.status = res.status;
@@ -55,7 +55,7 @@ export default createPlugin({
 
       // Forward response body
       const text = await res.text();
-      console.log("[apiMiddleware] Response Text: ", text, JSON.parse(text))
+      // console.log("[apiMiddleware] Response Text: ", text, JSON.parse(text))
       try {
         ctx.body = JSON.parse(text) || {} ;
       } catch {

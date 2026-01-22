@@ -1,5 +1,4 @@
 // @flow
-import React from 'react';
 import {GoogleOAuthProvider} from '@react-oauth/google';
 import {Route, Switch} from 'fusion-plugin-react-router';
 import {ToastProvider} from './ui/toast/ToastContext';
@@ -24,6 +23,7 @@ const Home = split({
 });
 
 const root = (
+  <GoogleOAuthProvider clientId='425113939071-v6t72sp3bgrbem2ts51cfidp8dh4o8nh.apps.googleusercontent.com'>
   <ToastProvider>
    <Switch>
     <Route exact path="/login" component={Login} />
@@ -31,6 +31,7 @@ const root = (
     <Route exact path="/" component={Home} />
   </Switch>
   </ToastProvider>
+  </GoogleOAuthProvider>
 );
 
 export default root;

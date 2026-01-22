@@ -17,6 +17,8 @@ import {EnvToken} from './plugins/env/token';
 
 import ApiMiddleware from './plugins/apiMiddleWare/plugin'
 
+// import 'dotenv/config';
+
 export default () => {
   const app = new App(root);
   app.register(EnvToken, EnvPlugin);
